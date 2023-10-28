@@ -1,0 +1,33 @@
+{
+  "name": "@meta-ultra/cli",
+  "version": "0.1.0",
+  "description": "CLI for creating Meta Ultra fashion projects, through the entire workflow including development, bundling and deployment.",
+  "keywords": [
+    "Meta Ultra",
+    "cli",
+    "skeleton"
+  ],
+  "repository": {
+    "type": "github",
+    "url": "https://github.com/meta-ultra/cli"
+  },
+  "homepage": "https://github.com/meta-ultra/cli",
+  "author": {
+    "name": "fsjohnhuang",
+    "url": "https://www.cnblogs.com/fsjohnhuang/"
+  },
+  "license": "ISC",
+  "private": false,
+  "type": "module",
+  "bin": {
+    "muc": "./src/index.js"
+  },
+  "files": [
+    "./src"
+  ],
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "cli-welcome": "^2.2.2",
+    "meow": "^12.1.1"
+  }
+}
