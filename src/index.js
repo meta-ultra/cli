@@ -1,6 +1,7 @@
 import meow from "meow";
 import chalk from "chalk";
 import welcome from "./welcome.js";
+import cmdCreateProject from "./cmdCreateProject/index.js";
 
 const helpText = `
   Usage
@@ -33,12 +34,28 @@ const cli = meow(helpText, {
       default: false,
       shortFlag: "v",
     },
+    /**----------------------
+     *    Command Create Project Start
+     *------------------------**/
+    template: {
+      type: "string",
+      default: "react-webapp",
+      shortFlag: "t",
+    },
+    typescript: {
+      type: "boolean",
+      default: true,
+      shortFlag: "ts",
+    },
+    /*---- END OF Command Create Project ----*/
   },
 });
 
 if (cli.input.length === 0) {
   welcome(cli.pkg);
-} else if (cli.input.includes("help")) {
+} else if (cli.input[0] === "create") {
+  cmdCreateProject(cli);
+} else {
   cli.showHelp();
 }
 

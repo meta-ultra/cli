@@ -27,7 +27,9 @@
   ],
   "dependencies": {
     "chalk": "^5.3.0",
+    "cli-alert": "^1.0.3",
     "cli-welcome": "^2.2.2",
-    "meow": "^12.1.1"
+    "meow": "^12.1.1",
+    "shelljs": "^0.8.5"
   }
 }
