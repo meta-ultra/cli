@@ -1,6 +1,6 @@
 import meow from "meow";
-import welcome from "cli-welcome";
 import chalk from "chalk";
+import welcome from "./welcome.js";
 
 const helpText = `
   Usage
@@ -23,6 +23,11 @@ const cli = meow(helpText, {
   importMeta: import.meta,
   description: false,
   flags: {
+    help: {
+      type: "boolean",
+      default: false,
+      shortFlag: "h",
+    },
     version: {
       type: "boolean",
       default: false,
@@ -32,28 +37,7 @@ const cli = meow(helpText, {
 });
 
 if (cli.input.length === 0) {
-  welcome({
-    title: cli.pkg.name,
-    tagLine: "Powered by Meta Ultra",
-    description: cli.pkg.description,
-    version: cli.pkg.version,
-    bgColor: "#FADC00",
-    color: "#000000",
-    bold: true,
-    clear: true,
-  });
-
-  console.log(`
-  Hi, welcome using @meta-ultra/cli. I'm John Huang, the author of Meta Ultra libraries.
-  Without further ado, run "muc create <package name> -- ts-react-webapp" to start a journey for building your own React Webapp with TypeScript right now.
-
-  📖 ${chalk.hex("#1da1f2").bold.inverse(" GitHub ")} ${chalk.dim(
-    "https://github.com/meta-ultra/cli"
-  )}
-  😎 ${chalk.hex("#6cc644").bold.inverse("  Blog  ")} ${chalk.dim(
-    "https://www.cnblogs.com/fsjohnhuang/"
-  )}
-  `);
+  welcome(cli.pkg);
 } else if (cli.input.includes("help")) {
   cli.showHelp();
 }
