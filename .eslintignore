@@ -1,0 +1,8 @@
+# Ignore artifacts:
+dist
+build
+bundle
+*.min.js
+
+# Ignore scripts:
+**/scripts

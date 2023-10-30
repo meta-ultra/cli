@@ -61,7 +61,9 @@ const cmdCreateProject = (cli) => {
   // create the project root directory
   shelljs.mkdir(name);
   // initialize the structure of project based on template
-  shelljs.cp("-R", join(templatePathInfo.path, "*"), name);
+  //todo  find an elegant solution to copy all files and directories including hidden
+  shelljs.cp("-rf", join(templatePathInfo.path, ".[^.]*"), name);
+  shelljs.cp("-rf", join(templatePathInfo.path, "*"), name);
 
   //todo persist the project metadata created by muc
 

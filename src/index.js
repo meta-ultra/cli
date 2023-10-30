@@ -39,7 +39,7 @@ const cli = meow(helpText, {
      *------------------------**/
     template: {
       type: "string",
-      default: "react-webapp",
+      default: "pnpm-workspace-react-bem",
       shortFlag: "t",
     },
     typescript: {

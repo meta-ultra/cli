@@ -1,0 +1,77 @@
+{
+  "search.exclude": {
+    // Avoid polluting search results with lockfile content
+    "pnpm-lock.yaml": true,
+    "pnpm-workspace.yaml": true,
+  },
+  // Ensure VSCode uses pnpm instead of npm
+  "eslint.packageManager": "pnpm",
+  "npm.packageManager": "pnpm",
+  // For those using file-nesting, nest the new files. E.g.:
+  "explorer.fileNesting.patterns": {
+    "package.json": "pnpm-workspace.yaml, pnpm-lock.yaml"
+  },
+  /**
+   * Call the default formatter set by `editor.defaultFormatter` to format the file on save.
+   * CAVEAT: enable `Formatting` at the right bottom first, even set `editor.formatOnSave` to true.
+   * Set false to it when use Format Code Action extension.
+   */
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": false,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": [
+      "source.formatDocument",
+      "source.fixAll.eslint"
+    ]
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": [
+      "source.formatDocument",
+      "source.fixAll.eslint"
+    ]
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": [
+      "source.formatDocument",
+      "source.fixAll.eslint"
+    ]
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": [
+      "source.formatDocument",
+      "source.fixAll.eslint"
+    ]
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": [
+      "source.formatDocument",
+      "source.fixAll.stylelint"
+    ]
+  },
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": [
+      "source.formatDocument",
+      "source.fixAll.stylelint"
+    ]
+  },
+  "[sass]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": [
+      "source.formatDocument",
+      "source.fixAll.stylelint"
+    ]
+  },
+  "[less]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.codeActionsOnSave": [
+      "source.formatDocument",
+      "source.fixAll.stylelint"
+    ]
+  }
+}
