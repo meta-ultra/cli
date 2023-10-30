@@ -45,7 +45,6 @@ const cli = meow(helpText, {
     typescript: {
       type: "boolean",
       default: true,
-      shortFlag: "ts",
     },
     /*---- END OF Command Create Project ----*/
   },
