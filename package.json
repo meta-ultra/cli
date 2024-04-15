@@ -5,7 +5,8 @@
   "keywords": [
     "Meta Ultra",
     "cli",
-    "skeleton"
+    "skeleton",
+    "code generater"
   ],
   "repository": {
     "type": "github",
@@ -16,19 +17,18 @@
     "name": "fsjohnhuang",
     "url": "https://www.cnblogs.com/fsjohnhuang/"
   },
-  "license": "ISC",
-  "private": false,
-  "type": "module",
-  "scripts": {
-    "prepare": "husky install",
-    "commit": "git-cz"
-  },
+  "license": "GPL-3.0-only",
+  "private": true,
   "bin": {
-    "muc": "./src/index.js"
+    "meta-ultra": "./src/index.js"
   },
   "files": [
     "./src"
   ],
+  "scripts": {
+    "prepare": "husky install",
+    "commit": "git-cz"
+  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "prettier --write --ignore-unknown",
@@ -44,29 +44,10 @@
   "devDependencies": {
     "@commitlint/cli": "^17.6.5",
     "@commitlint/config-conventional": "^17.6.5",
-    "@namics/stylelint-bem": "^9.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.59.9",
-    "@typescript-eslint/parser": "^5.59.9",
     "commitizen": "4.3.0",
     "cz-conventional-changelog": "3.3.0",
-    "eslint": "^8.42.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-react": "^7.32.2",
-    "eslint-plugin-react-hooks": "^4.6.0",
     "husky": "6.0",
     "lint-staged": "^13.2.2",
-    "prettier": "2.8.8",
-    "stylelint": "^15.7.0",
-    "stylelint-config-prettier": "^9.0.5",
-    "stylelint-config-recess-order": "^4.3.0",
-    "stylelint-config-standard": "^33.0.0",
-    "stylelint-prettier": "^3.0.0"
-  },
-  "dependencies": {
-    "chalk": "^5.3.0",
-    "cli-alert": "^1.0.3",
-    "cli-welcome": "^2.2.2",
-    "meow": "^12.1.1",
-    "shelljs": "^0.8.5"
+    "prettier": "2.8.8"
   }
 }
