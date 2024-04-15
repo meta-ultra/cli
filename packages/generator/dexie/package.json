@@ -1,5 +1,5 @@
 {
-  "name": "@generator/metadata-reader",
+  "name": "@generator/dexie",
   "version": "0.1.0",
   "author": "John Huang <fsjohnhuang@hotmail.com>",
   "engines": {
@@ -10,7 +10,7 @@
     "dev": "node ./tests/index.spec.js"
   },
   "dependencies": {
-    "@ltd/j-toml": "^1.38.0",
+    "@generator/metadata-reader": "workspace:^",
     "lodash": "^4.17.21",
     "yup": "^1.3.3"
   }
