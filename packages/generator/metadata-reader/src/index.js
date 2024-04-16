@@ -70,6 +70,86 @@ async function readMetadata(filePath) {
   return root;
 }
 
+/**
+ * Destructure reference string like tokens. For example:
+ * - "user.name" -> ["user", undefined, "name"]
+ * - "user.({type:'admin'}).name" -> ["user", "{type:'admin'}", "name"]
+ */
+function tokenizeReference(ref) {
+  let [tableName, condition, fieldName] = _.trim(ref).split(".").map((token) => _.trim(token));
+  if (fieldName === undefined) {
+    fieldName = condition;
+    condition = "";
+  }
+  condition = _.trim(condition.replace(/^\(|\)$/g, ""));
+  condition = _.isEmpty(condition) ? undefined : condition;
+
+  return [tableName, condition, fieldName];
+}
+
+function setTableType(tableName, table, columns) {
+  if ("type" in table) return;
+
+  for (const [name, value] of Object.entries(columns)) {
+    const ref = value["foreign_key_references"];
+    if (ref) {
+      const [foreignTableName] = tokenizeReference(ref);
+      if (tableName === foreignTableName) {
+        table.type = "self_reference";
+        table.selfReferenceColumnName = name;
+      }
+    }
+  }
+}
+
+function resolveForeignKey(metadata, sTableName, sColumnName, dTableName, dColumnName, dCondition) {
+  const { columns } = metadata[sTableName];
+  const column = columns[sColumnName];
+
+  const foreigns = metadata[sTableName]["foreigns"] = metadata[sTableName]["foreigns"] || [];
+
+  let ref = column["foreign_key_references"];
+  if (ref) {
+    const [foreignTableName, foreignCondition, foreignColumnName] = tokenizeReference(ref);
+    const foreignColumn = resolveForeignKey(metadata, foreignTableName, foreignColumnName, sTableName, sColumnName, foreignCondition);
+
+    column.type = foreignColumn.type;
+    foreigns.push([sColumnName, {
+      foreignTableName,
+      foreignCondition,
+      foreignColumnName,
+    }]);
+  }
+  else if (dTableName && dColumnName) {
+    if (metadata[sTableName]) {
+      const many = metadata[sTableName]["many"] = metadata[sTableName]["many"] || [];
+      many.push([sColumnName, {
+        manyTableName: dTableName,
+        manyCondition: dCondition,
+        manyColumnName: dColumnName,
+      }]);
+    }
+
+    return column;
+  }
+}
+
+function normalize(metadata) {
+  for (const tableName in metadata) {
+    const tableMetadata = metadata[tableName];
+    if (tableMetadata.columns) {
+      tableMetadata.table = tableMetadata.table || {};
+      setTableType(tableName, tableMetadata.table, tableMetadata.columns);
+
+      for (const columnName in tableMetadata.columns) {
+        // resolve foreign key to fulfill corresponding column definition
+        resolveForeignKey(metadata, tableName, columnName);
+      }
+    }
+  }
+}
+
 module.exports = {
   readMetadata,
+  normalize,
 };
