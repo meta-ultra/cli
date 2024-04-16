@@ -11,7 +11,10 @@
   },
   "dependencies": {
     "@generator/metadata-reader": "workspace:^",
+    "glob": "^10.3.12",
+    "handlebars": "^4.7.8",
     "lodash": "^4.17.21",
+    "sprintf-js": "^1.1.3",
     "yup": "^1.3.3"
   }
 }

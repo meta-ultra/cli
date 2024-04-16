@@ -1,0 +1,20 @@
+{{#scope}}
+{{import (type "ApplicationDexie") "../../db"}}
+{{import 
+  (sprintf "I%sTableName" (upperCamelCase tableName)) 
+  (sprintf "./I%s" (upperCamelCase tableName))
+}}
+
+export async function populateI{{~upperCamelCase tableName~}}(db: ApplicationDexie) {
+  const $table = db[I{{~upperCamelCase tableName~}}TableName];
+  await $table.clear();
+
+  let data: any[] = [];
+  {{#unless (isEmpty mock)}}
+  {{import "mock" "Random" "mockjs"}}
+  data = mock({{{mock}}});
+  {{/unless}}
+
+  await $table.bulkPut(data);
+}
+{{/scope}}

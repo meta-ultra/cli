@@ -1,0 +1,38 @@
+import Dexie, { type Table } from 'dexie';
+{{#each metadata}}
+import { type I{{upperCamelCase @key}}, I{{upperCamelCase @key}}TableName, I{{upperCamelCase @key}}Schema, I{{upperCamelCase @key}}KeyType, {{upperCamelCase @key}}, populateI{{upperCamelCase @key}} } from './entities/I{{upperCamelCase @key}}';
+{{/each}}
+
+export class ApplicationDexie extends Dexie {
+  {{#each metadata}}
+  [I{{upperCamelCase @key}}TableName]!: Table<I{{upperCamelCase @key}}, I{{upperCamelCase @key}}KeyType>;
+  {{/each}}
+
+  constructor() {
+    super("applicationDatabase");
+    this.version(1).stores({
+      {{#each metadata}}
+      [I{{upperCamelCase @key}}TableName]: I{{upperCamelCase @key}}Schema,
+      {{/each}}
+    });
+  }
+}
+
+export const db = new ApplicationDexie();
+
+{{#each metadata}}
+db[I{{upperCamelCase @key}}TableName].mapToClass({{upperCamelCase @key}});
+{{/each}}
+
+const populate = async function populate(this: ApplicationDexie) {
+  console.info("[@meta-ultra] Dexie population is done.");
+
+  {{#each metadata}}
+  await populateI{{upperCamelCase @key}}(this);
+  {{/each}}
+}.bind(db);
+db.on("populate", () => populate());
+
+// expose for debugging
+(window as unknown as {db: Dexie}).db = db;
+(window as unknown as {populate: (this: ApplicationDexie) => Promise<any>}).populate = populate;

@@ -1,0 +1,9 @@
+export const I{{~upperCamelCase tableName~}}TableName = "{{tableName}}";
+export const I{{~upperCamelCase tableName~}}Schema = "{{table.schema}}";
+export type I{{~upperCamelCase tableName~}}KeyType = {{{table.keyType}}};
+
+export interface I{{~upperCamelCase tableName}} {
+{{#each columns}}
+  {{@key}}{{#unless this.required}}?{{/unless}}: {{this.type}};
+{{/each}}
+}

@@ -1,0 +1,79 @@
+{{#scope}}
+{{import "Table" "dexie"}}
+{{import "db" "../../db"}}
+{{import 
+  (type (sprintf "I%s" (upperCamelCase tableName))) 
+  (sprintf "I%sTableName" (upperCamelCase tableName))
+  (sprintf "./I%s" (upperCamelCase tableName))
+}}
+{{#unless (isEmpty (getManyAppearOnce many))}}
+  {{import "pick" "isEqual" "lodash-es"}}
+{{/unless}}
+{{#each (getForeignManyTableNames foreigns many tableName)}}
+  {{import 
+    (type (sprintf "I%s" (upperCamelCase this))) 
+    (sprintf "I%sTableName" (upperCamelCase this))
+    (upperCamelCase this)
+    (sprintf "../I%s" (upperCamelCase this))
+  }}
+{{/each}}
+
+
+export class {{upperCamelCase tableName}} implements I{{~upperCamelCase tableName}} {
+  $table: Table;
+
+{{#each columns}}
+  {{@key}}{{~#unless this.required~}}?{{~/unless~}}: {{this.type~}};
+{{/each}}
+
+{{#each foreigns}}
+  {{getForeignPropertyName this.[0]}}?: {{upperCamelCase this.[1].foreignTableName}};
+{{/each}}
+{{#each (getManyAppearOnce many)}}
+  {{pluralizeLowerCamelCase this.[1].manyTableName~}}?: {{upperCamelCase this.[1].manyTableName~}}[];
+{{/each}}
+ 
+  constructor({{#each (sortByRequiredFirst columns)}}{{#if @index}}, {{/if}}{{this.[0]}}{{#unless this.[1].required}}?{{/unless}}: {{this.[1].type}}{{/each}}) {
+    this.$table = db[I{{~upperCamelCase tableName~}}TableName];
+
+  {{#each (sortByRequiredFirst columns)}}
+    {{#if this.[1].required}}
+    this.{{this.[0]}} = {{this.[0]}};
+    {{else}}
+    if ({{this.[0]}} !== undefined) this.{{this.[0]}} = {{this.[0]}};
+    {{/if}}
+  {{/each}}
+  }
+
+  {{#each foreigns}}
+  async load{{upperCamelCase (getForeignPropertyName this.[0])}}() {
+    if (this.{{this.[0]}} !== undefined) {
+      const record = await db[I{{upperCamelCase this.[1].foreignTableName}}TableName].get({
+        "{{this.[1].foreignColumnName}}": this.{{this.[0]}},
+        {{#unless (isEmpty this.[1].foreignCondition)}}...Object({{{this.[1].foreignCondition}}}),{{/unless}}
+      });
+      if (record) {
+        this.{{~getForeignPropertyName this.[0]}} = record as {{upperCamelCase this.[1].foreignTableName~}};
+      }
+    }
+  }
+  {{/each}}
+  {{#each (getManyAppearOnce many)}}
+  async load{{upperCamelCase (pluralizeLowerCamelCase this.[1].manyTableName)}}() {
+    {{#unless (isEmpty this.[1].manyCondition)}}
+    if (!isEqual(pick(this, Object.keys({{{this.[1].manyCondition}}})), {{{this.[1].manyCondition}}})) {
+      this.{{pluralizeLowerCamelCase this.[1].manyTableName}} = [];
+    }
+
+    {{/unless}}
+    this.{{pluralizeLowerCamelCase this.[1].manyTableName}} = await db[I{{upperCamelCase this.[1].manyTableName}}TableName].filter((record) => {
+      return record.{{this.[1].manyColumnName}} === this.{{this.[0]}};
+    }).toArray() as {{upperCamelCase this.[1].manyTableName}}[];
+
+    {{#if (isEqual this.[1].manyTableName tableName)}}
+    await Promise.all(this.{{pluralizeLowerCamelCase tableName}}.map(async (item) => await item.load{{pluralizeLowerCamelCase tableName}}()));
+    {{/if~}}
+  }
+  {{/each}}
+}
+{{/scope}}
