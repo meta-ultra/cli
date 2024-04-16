@@ -46,19 +46,54 @@ function frameDexieColumn(columnName, column, dexie) {
   };
 }
 
-function normalize(metadata) {
-  const dexieColumns = {};
-
-  for (const tableName in metadata) {
-    const { columns, dexie } = metadata[tableName];
-    for (const columnName in columns) {
-      dexieColumns[columnName] = frameDexieColumn(columnName, columns[columnName], dexie);
-    }
+function frameDexieForeigns(foreigns) {
+  const resultForeigns = [];
+  for (const [item0, item1] of foreigns) {
+    resultForeigns.push([
+      cvtColumnName2TSPropName(item0),
+      _.merge(
+        _.cloneDeep(item1),
+        { foreignColumnName: cvtColumnName2TSPropName(item1.foreignColumnName) }
+      )
+    ]);
   }
 
-  return {
-    columns: dexieColumns,
-  };
+  return resultForeigns;
+}
+
+function frameDexieMany(many) {
+  const resultMany = [];
+  for (const [item0, item1] of many) {
+    resultMany.push([
+      cvtColumnName2TSPropName(item0),
+      _.merge(
+        _.cloneDeep(item1),
+        { manyColumnName: cvtColumnName2TSPropName(item1.manyColumnName) }
+      )
+    ]);
+  }
+
+  return resultMany;
+}
+
+function normalize(metadata) {
+  const result = {};
+
+  for (const tableName in metadata) {
+    const resultTable = result[tableName] = {
+      columns: {},
+      foreigns: [],
+      many: [],
+    };
+    const { columns, foreigns = [], many = [], dexie = {} } = metadata[tableName];
+    for (const columnName in columns) {
+      resultTable.columns[columnName] = frameDexieColumn(columnName, columns[columnName], dexie);
+    }
+    resultTable.foreigns = frameDexieForeigns(foreigns);
+    resultTable.many = frameDexieMany(many);
+  }
+
+  return result;
 }
 
 module.exports = {
