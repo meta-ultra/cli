@@ -1,4 +1,5 @@
-const utils = require("../utils.js") ;
+const _ = require("lodash");
+const utils = require("../utils.js");
 
 /**
  *  Convert table name to property name in plural

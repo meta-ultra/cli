@@ -11,7 +11,6 @@
 {{/unless}}
 {{#each (getForeignManyTableNames foreigns many tableName)}}
   {{import 
-    (type (sprintf "I%s" (upperCamelCase this))) 
     (sprintf "I%sTableName" (upperCamelCase this))
     (upperCamelCase this)
     (sprintf "../I%s" (upperCamelCase this))

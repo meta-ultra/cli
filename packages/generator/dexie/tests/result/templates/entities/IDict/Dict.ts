@@ -2,7 +2,7 @@ import { Table } from "dexie";
 import { db } from "../../db";
 import { type IDict, IDictTableName } from "./IDict";
 import { pick, isEqual } from "lodash-es";
-import { type IRole, IRoleTableName, Role } from "../IRole";
+import { IRoleTableName, Role } from "../IRole";
 
 export class Dict implements IDict {
   $table: Table;

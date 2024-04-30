@@ -1,5 +1,6 @@
 const { isAbsolute, join } = require("node:path");
 const { readFile } = require("node:fs/promises");
+const Handlebars = require("handlebars");
 
 const readFileContent = async (path) =>
   (await readFile(isAbsolute(path) ? path : join(__dirname, path))).toString("utf8");

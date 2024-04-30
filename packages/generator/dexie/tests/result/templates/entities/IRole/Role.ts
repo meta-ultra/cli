@@ -1,7 +1,7 @@
 import { Table } from "dexie";
 import { db } from "../../db";
 import { type IRole, IRoleTableName } from "./IRole";
-import { type IDict, IDictTableName, Dict } from "../IDict";
+import { IDictTableName, Dict } from "../IDict";
 
 export class Role implements IRole {
   $table: Table;
