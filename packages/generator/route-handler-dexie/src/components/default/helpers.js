@@ -2,12 +2,62 @@
  * The publicly accessiable functions will be registered as Handlebars Helpers.
  */
 const _ = require("lodash");
+const Handlebars = require("handlebars");
 
 /**
- * Retrieve the table names for the foreign keys from the one side.
+ * Frame the yup schema.
  */
-function getForeignTableNames(foreigns) {
-  return _.map(foreigns, (item) => _.get(item, "1.foreignTableName"));
+const getYupSchema = (field, strict, isQueryForm) => {
+  let schema = [];
+  if (/^files?$/i.test(field.yup.type)) {
+    schema.push("files()");
+  }
+  if (/^date$/i.test(field.yup.type)) {
+    if (isQueryForm) {
+      schema.push(`maybeArrayOf(yup.date())`);
+    }
+    else {
+      schema.push(`date()`);
+    }
+  }
+  else {
+    schema = [`${field.yup.type === "integer" ? "number" : field.yup.type}()`];
+    if (["number", "integer"].indexOf(field.yup.type) !== -1) {
+      if (field.yup.type === "integer") {
+        schema.push("integer()");
+      }
+
+      if ("min" in field) {
+        schema.push(`min(${field.min})`);
+      }
+      if ("max" in field) {
+        schema.push(`max(${field.max})`);
+      }
+    }
+    else if (field.yup.type === "string") {
+      if (_.isNumber(field.length)) {
+        schema.push(`max(${field.length})`);
+      }
+
+      const regexp = _.get(field, "yup.regexp");
+      if (regexp) {
+        schema.push(`matches(RegExp("${regexp}"))`);
+      }
+    }
+  }
+
+  if (strict === true && field.required) {
+    schema.push("required()");
+  }
+
+  return schema.length ? new Handlebars.SafeString(schema.join(".")) : "";
+};
+
+
+const getPrimaryKeys = (columns) => {
+  return _.pickBy(columns, (value, key) => {
+    return value.isPrimary;
+  });
 };
 
 /**
@@ -37,34 +87,8 @@ function getManyAppearOnce(many){
   });
 }
 
-/**
- * Returns the dudeplicated foreign table names for named import statement.
- */
-function getForeignManyTableNames(foreigns, many, tableName) {
-  const foreignTableNames = getForeignTableNames(foreigns);
-  const manyTableNames = getManyTableNames(many);
-
-  let names = _.uniq(_.concat(foreignTableNames, manyTableNames));
-  if (typeof tableName === "string") {
-    names = names.filter((name) => name !== tableName);
-  }
-
-  return names;
-};
-
-function rateColumnPriority(column) {
-  return column[1].required ? 2 : column[1]["schema"] === "++" ? 1 : 0;
-};
-/**
- * Convert $dexie from object to array of entries and the required properties line in the most front,
- * and primary key follow ups, then the rest optional keys at the end.
- */
-function sortByRequiredFirst($dexie){
-  return Object.entries($dexie).sort((a, b) => rateColumnPriority(a) - rateColumnPriority(b) > 0 ? -1 : 1);
-};
-
 module.exports = {
   getManyAppearOnce,
-  getForeignManyTableNames,
-  sortByRequiredFirst,
-}
+  getYupSchema,
+  getPrimaryKeys,
+};

@@ -1,15 +1,15 @@
-{{!-- import { type NextRequest, type NextContext, NextResponse, objectify, withValidation } from "@meta-ultra/app-router";
+import { type NextRequest, type NextContext, NextResponse, objectify, withValidation } from "@meta-ultra/app-router";
 import { isEqual, isArray, isString } from "lodash-es";
 import yup from "../yup";
 /* Dexie START */
 import { query, pickPrimitive, dataUrify } from "@meta-ultra/dexie-utilities";
-import { db, I{{~upperCamelCase tableName~}}TableName, I{{upperCamelCase tableName}}{{#unless (isNilorEmpty $route-handlers-foreigns $route-handlers-many)}}, {{upperCamelCase tableName}}{{/unless}} } from "{{databasePackage}}";
+import { db, I{{upperCamelCase tableName}}TableName, I{{upperCamelCase tableName}}{{#unless (every (makeArray foreigns many) isEmpty)}}, {{upperCamelCase tableName}}{{/unless}} } from "{{databasePackage}}";
 /* Dexie END */
 
-const $table = db[I{{~upperCamelCase tableName~}}TableName];
+const $table = db[I{{upperCamelCase tableName}}TableName];
 
 const searchParamsSchemaOfGet = yup.object({
-  {{#unless (isSelfReference $table)}}
+  {{#unless (isEqual table.type "self_reference")}}
   page: yup.number().integer().min(1),
   pageSize: yup.number().integer().min(1),
   sorter: yup.object({
@@ -17,26 +17,27 @@ const searchParamsSchemaOfGet = yup.object({
     order: yup.string(),
   }),
   {{/unless}}
-  {{#each $route-handlers}}
-  {{@key~}}: yup.{{~frameRouteHandlersYupSchema this false true~}},
+  {{#each columns}}
+  {{@key}}: yup.{{getYupSchema this false true}},
   {{/each}}
 });
+
 export const GET = withValidation(
   { searchParamsSchema: searchParamsSchemaOfGet },
   async function (request: NextRequest, context: NextContext) {
     try {
-      {{#if (isSelfReference $table)}}
+      {{#if (isEqual table.type "self_reference")}}
       /* Dexie START */
-      let data = await $table.filter((record) => record.{{getSelfReferencePropName $table}} === undefined).toArray() as {{upperCamelCase tableName}}[];
+      let data = await $table.filter((record) => record.{{camelCase table.selfReferenceColumnName}} === undefined).toArray() as {{upperCamelCase tableName}}[];
       const load = async (data: any[]) => {
         while (data && data.length) {
           await Promise.all(data.map(async (record: Dept) => {
             await Promise.all([
-              {{#each $route-handlers-foreigns}}
-              await record.load{{~upperCamelCase (getForeignPropertyName this.[0])~}}(),
+              {{#each foreigns}}
+              await record.load{{upperCamelCase (getForeignPropertyName this.[0])}}(),
               {{/each}}
-              {{#each (filterRouteHandlersMany $route-handlers-many)}}
-              await record.load{{~upperCamelCase (pluralizeLowerCamelCase this.[1].manyTableName)~}}(),
+              {{#each (getManyAppearOnce many)}}
+              await record.load{{upperCamelCase (pluralizeLowerCamelCase this.[1].manyTableName)}}(),
               {{/each}}
             ])
           }));
@@ -56,16 +57,15 @@ export const GET = withValidation(
       const { page, pageSize, sorter, ...rest } = searchParamsSchemaOfGet.cast(objectify(request.nextUrl.searchParams));
       /* Dexie START */
       const { total, data } = await query($table, rest, page, pageSize, sorter);
-      {{#unless (isNilorEmpty $route-handlers-foreigns $route-handlers-many)}}
-
+      {{#unless (every (makeArray foreigns many) isEmpty)}}
       await Promise.all(
         data.map(async (record: {{upperCamelCase tableName}}) => {
           return Promise.all([
-            {{#each $route-handlers-foreigns}}
-            await record.load{{~upperCamelCase (getForeignPropertyName this.[0])~}}(),
+            {{#each foreigns}}
+            await record.load{{upperCamelCase (getForeignPropertyName this.[0])}}(),
             {{/each}}
-            {{#each (filterRouteHandlersMany $route-handlers-many)}}
-            await record.load{{~upperCamelCase (pluralizeLowerCamelCase this.[1].manyTableName)~}}(),
+            {{#each (getManyAppearOnce many)}}
+            await record.load{{upperCamelCase (pluralizeLowerCamelCase this.[1].manyTableName)}}(),
             {{/each}}
           ])
         })
@@ -90,33 +90,34 @@ export const GET = withValidation(
       });
     }
   }
-); --}}
+);
 
-{{!-- const searchParamsSchemaOfDelete = yup.object({
-  {{#each (getRouteHandlersPrimaryKeys $route-handlers)}}
-  {{pluralizeLowerCamelCase @key}}: yup.mixed().test((value) => yup.{{frameRouteHandlersYupSchema this}}.isValidSync(value) || yup.array().of(yup.{{frameRouteHandlersYupSchema this}}).isValidSync(value)),
+const searchParamsSchemaOfDelete = yup.object({
+  {{#each (getPrimaryKeys columns)}}
+  {{pluralizeLowerCamelCase @key}}: yup.mixed().test((value) => yup.{{getYupSchema this}}.isValidSync(value) || yup.array().of(yup.{{getYupSchema this}}).isValidSync(value)),
   {{/each}}
-  {{#each $route-handlers}}
-  {{@key~}}: yup.{{frameRouteHandlersYupSchema this}},
+  {{#each columns}}
+  {{@key}}: yup.{{getYupSchema this}},
   {{/each}}
 });
 export const DELETE = withValidation(
   { searchParamsSchema: searchParamsSchemaOfDelete },
   async function (request: NextRequest, context: NextContext) {
     try {
-      let { {{#each (getRouteHandlersPrimaryKeys $route-handlers)}}{{pluralizeLowerCamelCase @key}}, {{/each}}...rest } = searchParamsSchemaOfDelete.cast(objectify(request.nextUrl.searchParams));
+      let { {{#each (getPrimaryKeys columns)}}{{pluralizeLowerCamelCase @key}}, {{/each}}...rest } = searchParamsSchemaOfDelete.cast(objectify(request.nextUrl.searchParams));
       /* Dexie START */
       await db.transaction("rw", $table, async () => {
-        {{#unless (isNilorEmpty (getRouteHandlersPrimaryKeys $route-handlers))}}
-        let executed = false;{{#each (getRouteHandlersPrimaryKeys $route-handlers)}}
+        {{#unless (isEmpty (getPrimaryKeys columns))}}
+        let executed = false;
+        {{#each (getPrimaryKeys columns)}}
         if (isArray({{pluralizeLowerCamelCase @key}})) {
           executed = true;
-          {{pluralizeLowerCamelCase @key}} = yup.array().of(yup.{{frameRouteHandlersYupSchema this}}).cast({{pluralizeLowerCamelCase @key}});
+          {{pluralizeLowerCamelCase @key}} = yup.array().of(yup.{{getYupSchema this}}).cast({{pluralizeLowerCamelCase @key}});
           await $table.bulkDelete(({{pluralizeLowerCamelCase @key}} as any[]).filter((x) => x !== undefined) as {{this.type}}[]);
         }
         else if (isString({{pluralizeLowerCamelCase @key}})) {
           executed = true;
-          {{pluralizeLowerCamelCase @key}} = yup.{{frameRouteHandlersYupSchema this}}.cast({{pluralizeLowerCamelCase @key}});
+          {{pluralizeLowerCamelCase @key}} = yup.{{getYupSchema this}}.cast({{pluralizeLowerCamelCase @key}});
           await $table.bulkDelete([{{pluralizeLowerCamelCase @key}}] as number[]);
         }
         {{/each}}
@@ -151,8 +152,8 @@ export const DELETE = withValidation(
 );
 
 const singleBodySchemaOfPost = yup.object({
-  {{#each $route-handlers}}
-  {{@key~}}: yup.{{frameRouteHandlersYupSchema this true}},
+  {{#each columns}}
+  {{@key}}: yup.{{getYupSchema this true}},
   {{/each}}
 });
 const batchBodySchemaOfPost = yup.array().of(singleBodySchemaOfPost);
@@ -208,4 +209,4 @@ export const POST = withValidation(
       });
     }
   }
-); --}}
+);

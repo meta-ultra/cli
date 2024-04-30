@@ -11,7 +11,7 @@ function setup() {
   registerHelpers(...Object.values(helpers));
 }
 
-async function doGenerate(metadata, filter) {
+async function doGenerate(metadata, databasePackage, filter) {
   const generatedCodes = {};
   const templateDirRelativePath = `./templates`;
 
@@ -24,7 +24,7 @@ async function doGenerate(metadata, filter) {
     return Promise.all(entitiesPaths.map(async ([absolutePath, relativePath]) => {
       const filePath = `${relativePath.replace(templateDirRelativePath, "").replace(/{{name}}/g, pluralize(_.kebabCase(tableName)))}`.replace(HBS_RE, "");
       if (HBS_RE.test(relativePath)) {
-        generatedCodes[filePath] = await generateOnFly(absolutePath, {tableName, ...tableMetadata});
+        generatedCodes[filePath] = await generateOnFly(absolutePath, {tableName, databasePackage, ...tableMetadata});
       }
       else {
         generatedCodes[filePath] = await readFileContent(absolutePath);
@@ -35,9 +35,9 @@ async function doGenerate(metadata, filter) {
   return generatedCodes;
 }
 
-async function generate(metadata, filter) {
+async function generate(metadata, databasePackage, filter) {
   setup();
-  return doGenerate(metadata, filter);
+  return doGenerate(metadata, databasePackage, filter);
 }
 
 module.exports = {

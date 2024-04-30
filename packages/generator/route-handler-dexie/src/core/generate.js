@@ -1,7 +1,7 @@
-async function generate(metadata, filter, template = "default") {
+async function generate(metadata, databasePackage, filter, template = "default") {
   return new Promise((resolve) => {
     const component = require(`../components/${template}/index.js`);
-    resolve(component.generate(metadata, filter));
+    resolve(component.generate(metadata, databasePackage, filter));
   })
 }
 

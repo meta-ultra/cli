@@ -1,11 +1,24 @@
 const _ = require("lodash");
 const { cvtColumnName2TSPropName, cvtColumnType2TSType } = require("@generator/metadata-reader");
 
+function cvtColumnType2YupSchemaType (type) {
+  const mappings = [
+    [/^(string|(var)?char|text)$/i, "string"],
+    [/^(smallint|int(eger)?|long|bigint|\d+)$/i, "integer"],
+    [/^(number|float8?|real|numeric|\d+\.\d*)$/i, "number"],
+    [/^(bool(ean)?)$/i, "boolean"],
+    [/^(date|datetime|time(stampz?)?|interval)$/i, "date"],
+  ];
+  const mapping = mappings.find(([re]) => re.test(type));
+
+  return mapping ? mapping[1] : "any";
+}
+
 /**
  * Limitations:
  * 1. Compound indexes is not supported at the moment.
  */
-function frameRouteHandlerDexieColumn(columnName, column, dexie) {
+function frameRouteHandlerDexieColumn(columnName, column, dexie, yup) {
   let indexed = !!_.get(dexie, `${columnName}.indexed`);
   if (!indexed) {
     indexed = !!column["primary_key"];
@@ -19,7 +32,10 @@ function frameRouteHandlerDexieColumn(columnName, column, dexie) {
     indexed,
     isPrimary: !!column["primary_key"],
     length: column.length,
-
+    yup: {
+      type: cvtColumnType2YupSchemaType(column.type),
+      ...yup[columnName],
+    },
   };
 }
 
@@ -58,15 +74,18 @@ function normalize(metadata) {
 
   for (const tableName in metadata) {
     const resultTable = result[tableName] = {
-      table: {},
+      table: {
+        type: undefined,
+      },
       columns: {},
       foreigns: [],
       many: [],
     };
-    const { columns, foreigns = [], many = [], dexie = {} } = metadata[tableName];
+    const { table, columns, foreigns = [], many = [], dexie = {}, yup = {} } = metadata[tableName];
     for (const columnName in columns) {
-      resultTable.columns[cvtColumnName2TSPropName(columnName)] = frameRouteHandlerDexieColumn(columnName, columns[columnName], dexie);
+      resultTable.columns[cvtColumnName2TSPropName(columnName)] = frameRouteHandlerDexieColumn(columnName, columns[columnName], dexie, yup);
     }
+    resultTable.table = table;
     resultTable.foreigns = frameRouteHandlerDexieForeigns(foreigns);
     resultTable.many = frameRouteHandlerDexieMany(many);
   }

@@ -13,6 +13,7 @@
     "@generator/metadata-reader": "workspace:^",
     "@generator/handlebars": "workspace:^",
     "glob": "^10.3.12",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "handlebars": "^4.7.8"
   }
 }

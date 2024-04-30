@@ -1,7 +1,12 @@
-const utils = require('./token.js');
+const token = require('./token.js');
 const scopeImports = require('./scopeImports.js');
 
+function makeArray(...args) {
+  return args;
+}
+
 module.exports = [
-  ...Object.values(utils),
+  makeArray,
+  ...Object.values(token),
   ...Object.values(scopeImports),
 ];

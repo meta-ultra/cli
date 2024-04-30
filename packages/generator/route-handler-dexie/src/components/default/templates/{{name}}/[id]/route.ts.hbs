@@ -1,0 +1,92 @@
+import { type NextRequest, type NextContext, NextResponse, objectify, withValidation } from "@meta-ultra/app-router";
+import { dataUrify } from "@meta-ultra/dexie-utilities";
+import yup from "../../yup";
+import { db, I{{upperCamelCase tableName}}TableName{{#unless (isEmpty foreigns)}}, {{upperCamelCase tableName}}{{/unless}} } from "{{databasePackage}}";
+
+const $table = db[I{{upperCamelCase tableName}}TableName];
+
+const paramsSchemaOfGet = yup.object({
+  {{#each columns}}
+  {{@key}}: yup.{{getYupSchema this}},
+  {{/each}}
+});
+export const GET = withValidation(
+  { paramsSchema: paramsSchemaOfGet },
+  async function (request: NextRequest, context: NextContext) {
+    try {
+      const params = paramsSchemaOfGet.cast(context.params);
+      /* Dexie START */
+      const data = await $table.get(params){{#unless (isEmpty foreigns)}} as {{upperCamelCase tableName}} | undefined{{/unless}};
+      {{#unless (isEmpty foreigns)}}
+      if (data) {
+        await Promise.all([
+          {{#each foreigns}}
+          await data.load{{upperCamelCase (getForeignPropertyName this.[0])}}(),
+          {{/each}}
+        ]);
+      }
+      {{/unless}}
+      /* Dexie END */
+
+
+      return NextResponse.json({
+        code: 0,
+        data,
+      });
+    }
+    catch(e) {
+      return NextResponse.json({
+        code: 1,
+        error: e,
+        message: (e as {message?: string}).message,
+      });
+    }
+  }
+);
+ 
+const paramsSchemaOfPut = yup.object({
+  {{#each (getPrimaryKeys columns)}}
+  {{@key}}: yup.{{getYupSchema this true}}.required(),
+  {{/each}}
+});
+const bodySchemaOfPut = yup.object({
+  {{#each columns}}
+  {{@key}}: yup.{{getYupSchema this}},
+  {{/each}}
+});
+export const PUT = withValidation(
+  { 
+    paramsSchema: paramsSchemaOfPut, 
+    bodySchema: bodySchemaOfPut,
+  },
+  async function (request: NextRequest, context: NextContext) {
+    try {
+      const params = paramsSchemaOfPut.cast(context.params);
+
+      let data: object | FormData;
+      const contentType = request.headers.get("Content-Type") || "";
+      if (/^application\/json$/i.test(contentType)) {
+        data = bodySchemaOfPut.cast(await request.json());
+      }
+      else {
+        data = await request.formData();
+      }
+
+      /* Dexie START */
+      {{!-- data = await dataUrify(objectify(data)); --}}
+      const dexieRecord = objectify(data);
+      {{#each (getPrimaryKeys columns)}}
+      await $table.update(params.{{@key}}, dexieRecord);
+      {{/each}}
+      /* Dexie END */
+      return NextResponse.json({ code: 0 });
+    }
+    catch(e) {
+      return NextResponse.json({
+        code: 1,
+        error: e,
+        message: (e as {message?: string}).message,
+      });
+    }
+  }
+);

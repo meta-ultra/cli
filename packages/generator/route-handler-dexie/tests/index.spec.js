@@ -6,6 +6,6 @@ const { normalize, generate, output } = require("../src/index.js");
   const metadata = await MetadataReader.readMetadata(join(__dirname, "./metadata"));
   MetadataReader.normalize(metadata);
   const routeHandlerDexieMetadata = normalize(metadata);
-  const generatedCodes = await generate(routeHandlerDexieMetadata);
+  const generatedCodes = await generate(routeHandlerDexieMetadata, "../dexie");
   await output(join(__dirname, "./result"), generatedCodes);
 })()
