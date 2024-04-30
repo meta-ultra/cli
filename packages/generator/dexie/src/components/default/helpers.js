@@ -1,3 +1,6 @@
+/**
+ * The publicly accessiable functions will be registered as Handlebars Helpers.
+ */
 const _ = require("lodash");
 
 /**

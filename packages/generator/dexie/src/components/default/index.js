@@ -1,6 +1,6 @@
 const { join, relative } = require("node:path");
 const { glob } = require("glob");
-const { generateOnFly, slashify, upperCamelCase, registerHelpers } = require("../../core/handlebarsHelper");
+const { generateOnFly, slashify, upperCamelCase, registerHelpers } = require("@generator/handlebars");
 const helpers = require("./helpers");
 
 const HBS_RE = /\.hbs$/i;
