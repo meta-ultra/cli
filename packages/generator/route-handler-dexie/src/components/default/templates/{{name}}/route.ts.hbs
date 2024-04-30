@@ -1,0 +1,211 @@
+{{!-- import { type NextRequest, type NextContext, NextResponse, objectify, withValidation } from "@meta-ultra/app-router";
+import { isEqual, isArray, isString } from "lodash-es";
+import yup from "../yup";
+/* Dexie START */
+import { query, pickPrimitive, dataUrify } from "@meta-ultra/dexie-utilities";
+import { db, I{{~upperCamelCase tableName~}}TableName, I{{upperCamelCase tableName}}{{#unless (isNilorEmpty $route-handlers-foreigns $route-handlers-many)}}, {{upperCamelCase tableName}}{{/unless}} } from "{{databasePackage}}";
+/* Dexie END */
+
+const $table = db[I{{~upperCamelCase tableName~}}TableName];
+
+const searchParamsSchemaOfGet = yup.object({
+  {{#unless (isSelfReference $table)}}
+  page: yup.number().integer().min(1),
+  pageSize: yup.number().integer().min(1),
+  sorter: yup.object({
+    field: yup.string(),
+    order: yup.string(),
+  }),
+  {{/unless}}
+  {{#each $route-handlers}}
+  {{@key~}}: yup.{{~frameRouteHandlersYupSchema this false true~}},
+  {{/each}}
+});
+export const GET = withValidation(
+  { searchParamsSchema: searchParamsSchemaOfGet },
+  async function (request: NextRequest, context: NextContext) {
+    try {
+      {{#if (isSelfReference $table)}}
+      /* Dexie START */
+      let data = await $table.filter((record) => record.{{getSelfReferencePropName $table}} === undefined).toArray() as {{upperCamelCase tableName}}[];
+      const load = async (data: any[]) => {
+        while (data && data.length) {
+          await Promise.all(data.map(async (record: Dept) => {
+            await Promise.all([
+              {{#each $route-handlers-foreigns}}
+              await record.load{{~upperCamelCase (getForeignPropertyName this.[0])~}}(),
+              {{/each}}
+              {{#each (filterRouteHandlersMany $route-handlers-many)}}
+              await record.load{{~upperCamelCase (pluralizeLowerCamelCase this.[1].manyTableName)~}}(),
+              {{/each}}
+            ])
+          }));
+          data = data.flatMap((record) => {
+            return record.{{pluralizeLowerCamelCase tableName}} || [];
+          });
+        }
+      };
+      await load(data);
+      /* Dexie END */
+ 
+      return NextResponse.json({
+        code: 0,
+        data,
+      });
+      {{else}}
+      const { page, pageSize, sorter, ...rest } = searchParamsSchemaOfGet.cast(objectify(request.nextUrl.searchParams));
+      /* Dexie START */
+      const { total, data } = await query($table, rest, page, pageSize, sorter);
+      {{#unless (isNilorEmpty $route-handlers-foreigns $route-handlers-many)}}
+
+      await Promise.all(
+        data.map(async (record: {{upperCamelCase tableName}}) => {
+          return Promise.all([
+            {{#each $route-handlers-foreigns}}
+            await record.load{{~upperCamelCase (getForeignPropertyName this.[0])~}}(),
+            {{/each}}
+            {{#each (filterRouteHandlersMany $route-handlers-many)}}
+            await record.load{{~upperCamelCase (pluralizeLowerCamelCase this.[1].manyTableName)~}}(),
+            {{/each}}
+          ])
+        })
+      );
+      {{/unless}}
+      /* Dexie END */
+ 
+      return NextResponse.json({
+        code: 0,
+        data: {
+          total,
+          data,
+        }
+      });
+      {{/if}}
+    }
+    catch(e) {
+      return NextResponse.json({
+        code: 1,
+        error: e,
+        message: (e as {message?: string}).message,
+      });
+    }
+  }
+); --}}
+
+{{!-- const searchParamsSchemaOfDelete = yup.object({
+  {{#each (getRouteHandlersPrimaryKeys $route-handlers)}}
+  {{pluralizeLowerCamelCase @key}}: yup.mixed().test((value) => yup.{{frameRouteHandlersYupSchema this}}.isValidSync(value) || yup.array().of(yup.{{frameRouteHandlersYupSchema this}}).isValidSync(value)),
+  {{/each}}
+  {{#each $route-handlers}}
+  {{@key~}}: yup.{{frameRouteHandlersYupSchema this}},
+  {{/each}}
+});
+export const DELETE = withValidation(
+  { searchParamsSchema: searchParamsSchemaOfDelete },
+  async function (request: NextRequest, context: NextContext) {
+    try {
+      let { {{#each (getRouteHandlersPrimaryKeys $route-handlers)}}{{pluralizeLowerCamelCase @key}}, {{/each}}...rest } = searchParamsSchemaOfDelete.cast(objectify(request.nextUrl.searchParams));
+      /* Dexie START */
+      await db.transaction("rw", $table, async () => {
+        {{#unless (isNilorEmpty (getRouteHandlersPrimaryKeys $route-handlers))}}
+        let executed = false;{{#each (getRouteHandlersPrimaryKeys $route-handlers)}}
+        if (isArray({{pluralizeLowerCamelCase @key}})) {
+          executed = true;
+          {{pluralizeLowerCamelCase @key}} = yup.array().of(yup.{{frameRouteHandlersYupSchema this}}).cast({{pluralizeLowerCamelCase @key}});
+          await $table.bulkDelete(({{pluralizeLowerCamelCase @key}} as any[]).filter((x) => x !== undefined) as {{this.type}}[]);
+        }
+        else if (isString({{pluralizeLowerCamelCase @key}})) {
+          executed = true;
+          {{pluralizeLowerCamelCase @key}} = yup.{{frameRouteHandlersYupSchema this}}.cast({{pluralizeLowerCamelCase @key}});
+          await $table.bulkDelete([{{pluralizeLowerCamelCase @key}}] as number[]);
+        }
+        {{/each}}
+        if (!executed) {
+          const { total, data } = await query($table, rest);
+          await Promise.all(data.map(async (target) => {
+            return $table.filter((record: I{{upperCamelCase tableName}}) => {
+              return isEqual(record, target);
+            }).delete();
+          }));
+        }
+        {{~else}}
+        const { total, data } = await query($table, rest);
+        await Promise.all(data.map(async (target) => {
+          return $table.filter((record: I{{upperCamelCase tableName}}) => {
+            return isEqual(record, target);
+          }).delete();
+        }));
+        {{/unless}}
+      });
+      /* Dexie END */
+      return NextResponse.json({code: 0});
+    }
+    catch(e) {
+      return NextResponse.json({
+        code: 1,
+        error: e,
+        message: (e as {message?: string}).message,
+      });
+    }
+  }
+);
+
+const singleBodySchemaOfPost = yup.object({
+  {{#each $route-handlers}}
+  {{@key~}}: yup.{{frameRouteHandlersYupSchema this true}},
+  {{/each}}
+});
+const batchBodySchemaOfPost = yup.array().of(singleBodySchemaOfPost);
+const bodySchemaOfPost = yup.mixed().test((value) => {
+  return singleBodySchemaOfPost.isValidSync(value) || batchBodySchemaOfPost.isValidSync(value);
+});
+export const POST = withValidation(
+  { bodySchema: bodySchemaOfPost },
+  async function (request: NextRequest, context: NextContext) {
+    let data: object | FormData;
+    const contentType = request.headers.get("Content-Type") || "";
+    if (/^application\/json$/i.test(contentType)) {
+      data = await request.json();
+    }
+    else {
+      data = await request.formData();
+    }
+
+    const isBatch = batchBodySchemaOfPost.isValidSync(data);
+    try {
+      if (isBatch) {
+        // The data must be the type of JSON for batch operating.
+        const records = batchBodySchemaOfPost.cast(data);
+        if (records) {
+          /* Dexie START */
+          await Promise.all(
+            records.map(async (record) => {
+              {{!-- record = await dataUrify(objectify(record)); --}}
+              const dexieRecord = objectify(record);
+              if (!await $table.where(pickPrimitive(dexieRecord)).count()) {
+                await $table.add({...dexieRecord as any});
+              }
+            })
+          )
+          /* Dexie END */
+        } 
+      }
+      else {
+        const record = data instanceof FormData ? data : singleBodySchemaOfPost.cast(data);
+        /* Dexie START */
+        {{!-- record = await dataUrify(objectify(record)); --}}
+        const dexieRecord = objectify(record);
+        await $table.add(singleBodySchemaOfPost.cast(dexieRecord) as any);
+        /* Dexie END */
+      }
+      return NextResponse.json({code: 0});
+    }
+    catch(e) {
+      return NextResponse.json({
+        code: 1,
+        // error: e, // the error instance thrown from Dexie might be not able to serialized through JSON.stringify, uncomment this line if you're sure JSON.stringify(e) will not hit a new error.
+        message: (e as {message?: string}).message,
+      });
+    }
+  }
+); --}}
