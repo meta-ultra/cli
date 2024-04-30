@@ -1,0 +1,19 @@
+{
+  "name": "@generator/handlebars",
+  "version": "0.1.0",
+  "author": "John Huang <fsjohnhuang@hotmail.com>",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "main": "./src/index.js",
+  "scripts": {
+    "dev": "node ./tests/index.spec.js"
+  },
+  "dependencies": {
+    "glob": "^10.3.12",
+    "handlebars": "^4.7.8",
+    "lodash": "^4.17.21",
+    "sprintf-js": "^1.1.3",
+    "yup": "^1.3.3"
+  }
+}
